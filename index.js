@@ -1,50 +1,62 @@
-// Variable Definitions & Dependencies
+// imported modules
 const inquirer = require('inquirer');
-const db = require('./db/connection');
+const mysql = require('mysql2');
 
-// Start server after DB connection
-db.connect(err => {
-    if (err) throw err;
-    console.log('Database connected.');
-    employee_tracker();
-});
+const db = mysql.createConnection(
+    {
+        host: 'localhost',
+        // MySQL username,
+        user: 'root',
+        // TODO: Add MySQL password
+        password: 'mysj',
+        database: 'bagels_db'
+    },
+    console.log(`Connected to the bagels_db database.`)
+);
 
-var employee_tracker = function () {
+const sesame = function () {
     inquirer.prompt([{
         // Begin Command Line
         type: 'list',
         name: 'prompt',
         message: 'What would you like to do?',
-        choices: ['View All Department', 'View All Roles', 'View All Employees', 'Add A Department', 'Add A Role', 'Add An Employee', 'Update An Employee Role', 'Log Out']
+        choices: ['View All Department', 'View All Roles', 'View All Employees', 'Add A Department', 'Add A Role', 'Add An Employee', 'Update An Employee Role', 'End Session']
     }]).then((answers) => {
-        // Views the Department Table in the Database
+
+        // Views the Department Table in the sesame
         if (answers.prompt === 'View All Department') {
             db.query(`SELECT * FROM department`, (err, result) => {
                 if (err) throw err;
                 console.log("Viewing All Departments: ");
                 console.table(result);
-                employee_tracker();
+                sesame();
             });
+            // views all roles
+
         } else if (answers.prompt === 'View All Roles') {
             db.query(`SELECT * FROM role`, (err, result) => {
                 if (err) throw err;
                 console.log("Viewing All Roles: ");
                 console.table(result);
-                employee_tracker();
+                sesame();
             });
+            // views all employees
+
         } else if (answers.prompt === 'View All Employees') {
             db.query(`SELECT * FROM employee`, (err, result) => {
                 if (err) throw err;
                 console.log("Viewing All Employees: ");
                 console.table(result);
-                employee_tracker();
+                sesame();
             });
+
         } else if (answers.prompt === 'Add A Department') {
             inquirer.prompt([{
+
                 // Adding a Department
                 type: 'input',
                 name: 'department',
-                message: 'What is the name of the dpeartment?',
+                message: 'What is the name of the department?',
                 validate: departmentInput => {
                     if (departmentInput) {
                         return true;
@@ -53,15 +65,17 @@ var employee_tracker = function () {
                         return false;
                     }
                 }
+
             }]).then((answers) => {
                 db.query(`INSERT INTO department (name) VALUES (?)`, [answers.department], (err, result) => {
                     if (err) throw err;
-                    console.log(`Added ${answers.department} to the database.`)
-                    employee_tracker();
+                    console.log(`Added ${answers.department} to the sesame.`)
+                    sesame();
                 });
             })
+
         } else if (answers.prompt === 'Add A Role') {
-            // Beginning with the database so that we may acquire the departments for the choice
+            // Beginning with the sesamee
             db.query(`SELECT * FROM department`, (err, result) => {
                 if (err) throw err;
 
@@ -107,6 +121,7 @@ var employee_tracker = function () {
                             return array;
                         }
                     }
+
                 ]).then((answers) => {
                     // Comparing the result and storing it into the variable
                     for (var i = 0; i < result.length; i++) {
@@ -117,13 +132,14 @@ var employee_tracker = function () {
 
                     db.query(`INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`, [answers.role, answers.salary, department.id], (err, result) => {
                         if (err) throw err;
-                        console.log(`Added ${answers.role} to the database.`)
-                        employee_tracker();
+                        console.log(`Added ${answers.role} to the sesame.`)
+                        sesame();
                     });
                 })
             });
+
         } else if (answers.prompt === 'Add An Employee') {
-            // Calling the database to acquire the roles and managers
+            // Calling the sesame to acquire the roles and managers
             db.query(`SELECT * FROM employee, role`, (err, result) => {
                 if (err) throw err;
 
@@ -137,7 +153,7 @@ var employee_tracker = function () {
                             if (firstNameInput) {
                                 return true;
                             } else {
-                                console.log('Please Add A First Name!');
+                                console.log('Please input their name!');
                                 return false;
                             }
                         }
@@ -151,7 +167,7 @@ var employee_tracker = function () {
                             if (lastNameInput) {
                                 return true;
                             } else {
-                                console.log('Please Add A Salary!');
+                                console.log('Please input their name!');
                                 return false;
                             }
                         }
@@ -184,6 +200,7 @@ var employee_tracker = function () {
                             }
                         }
                     }
+
                 ]).then((answers) => {
                     // Comparing the result and storing it into the variable
                     for (var i = 0; i < result.length; i++) {
@@ -194,13 +211,14 @@ var employee_tracker = function () {
 
                     db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`, [answers.firstName, answers.lastName, role.id, answers.manager.id], (err, result) => {
                         if (err) throw err;
-                        console.log(`Added ${answers.firstName} ${answers.lastName} to the database.`)
-                        employee_tracker();
+                        console.log(`Added ${answers.firstName} ${answers.lastName} to the sesame.`)
+                        sesame();
                     });
                 })
             });
+
         } else if (answers.prompt === 'Update An Employee Role') {
-            // Calling the database to acquire the roles and managers
+            // Calling the sesame to acquire the roles and managers
             db.query(`SELECT * FROM employee, role`, (err, result) => {
                 if (err) throw err;
 
@@ -233,6 +251,7 @@ var employee_tracker = function () {
                             return newArray;
                         }
                     }
+
                 ]).then((answers) => {
                     // Comparing the result and storing it into the variable
                     for (var i = 0; i < result.length; i++) {
@@ -247,16 +266,19 @@ var employee_tracker = function () {
                         }
                     }
 
-                    db.query(`UPDATE employee SET ? WHERE ?`, [{role_id: role}, {last_name: name}], (err, result) => {
+                    db.query(`UPDATE employee SET ? WHERE ?`, [{ role_id: role }, { last_name: name }], (err, result) => {
                         if (err) throw err;
-                        console.log(`Updated ${answers.employee} role to the database.`)
-                        employee_tracker();
+                        console.log(`Updated ${answers.employee} role to the sesame.`)
+                        sesame();
                     });
                 })
             });
-        } else if (answers.prompt === 'Log Out') {
+
+        } else if (answers.prompt === 'End Session') {
             db.end();
-            console.log("Good-Bye!");
+            console.log("Have a good day!");
         }
     })
 };
+
+sesame();
